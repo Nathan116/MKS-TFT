@@ -161,6 +161,10 @@ template <class T> inline void swap(T& a, T& b)
 }
 
 #if defined(STM32F107xC) && defined(MKS_TFT)
+
+
+
+
 inline void UTFT::LCD_Write_COM(uint8_t VL)
 {
 	HAL_GPIO_WritePin(LCD_RS_GPIO_Port, LCD_RS_Pin, GPIO_PIN_RESET);
@@ -252,14 +256,16 @@ void UTFT::LCD_Write_COM_DATA8(uint8_t com1, uint8_t dat1)
 void UTFT::InitLCD(DisplayOrientation po)
 {
 	orient = po;
-	disp_x_size = getDisplayXSize() - 1;
-	disp_y_size = getDisplayYSize() - 1;
+    disp_x_size = getDisplayXSize() - 1;
+    disp_y_size = getDisplayYSize() - 1;
 
 #if defined(STM32F107xC) && defined(MKS_TFT)
 	HAL_GPIO_WritePin(LCD_nCS_GPIO_Port, LCD_nCS_Pin, GPIO_PIN_RESET);
-
+	osDelay (5);
 	HAL_GPIO_WritePin(LCD_nWR_GPIO_Port, LCD_nWR_Pin, GPIO_PIN_SET);
 	HAL_GPIO_WritePin(LCD_nRD_GPIO_Port, LCD_nRD_Pin, GPIO_PIN_SET);
+
+
 #elif defined(STM32F103xE) && defined(CZMINI)
 	HAL_GPIO_WritePin(LCD_RESET_GPIO_Port, LCD_RESET_Pin, GPIO_PIN_RESET);
 	osDelay (5);
@@ -268,6 +274,111 @@ void UTFT::InitLCD(DisplayOrientation po)
 
 	// *pLcdReg = 0x0000;
 	// uint16_t volatile id = *pLcdData;        // Read display id
+#endif
+
+
+
+
+#if defined(ILI9486)
+
+    LCD_Write_COM(0x01);
+    LCD_Write_DATA8(0x00);
+    osDelay(50);
+    LCD_Write_COM(0x28);
+    LCD_Write_DATA8(0x00);
+
+    LCD_Write_COM(0xC0);        // Power Control 1
+    LCD_Write_DATA8(0x0d);
+    LCD_Write_DATA8(0x0d);
+
+    LCD_Write_COM(0xC1);        // Power Control 2
+    LCD_Write_DATA8(0x43);
+    LCD_Write_DATA8(0x00);
+
+    LCD_Write_COM(0xC2);        // Power Control 3
+    LCD_Write_DATA8(0x00);
+
+    LCD_Write_COM(0xC5);        // VCOM Control
+    LCD_Write_DATA8(0x00);
+    LCD_Write_DATA8(0x48);
+    LCD_Write_COM(0xC7);  //ДОБАВИЛ
+    LCD_Write_DATA8(0x86);
+
+
+//    LCD_Write_COM(0xB6);        // Display Function Control
+//    LCD_Write_DATA8(0x00);
+//    LCD_Write_DATA8(0x42);           // 0x22 = Normal 0x42 = Rotate display 180 deg.
+//    LCD_Write_DATA8(0x3B);
+
+//    LCD_Write_COM(0xE0);        // PGAMCTRL (Positive Gamma Control)
+//    LCD_Write_DATA8(0x0f);
+//    LCD_Write_DATA8(0x24);
+//    LCD_Write_DATA8(0x1c);
+//    LCD_Write_DATA8(0x0a);
+//    LCD_Write_DATA8(0x0f);
+//    LCD_Write_DATA8(0x08);
+//    LCD_Write_DATA8(0x43);
+//    LCD_Write_DATA8(0x88);
+//    LCD_Write_DATA8(0x32);
+//    LCD_Write_DATA8(0x0f);
+//    LCD_Write_DATA8(0x10);
+//    LCD_Write_DATA8(0x06);
+//    LCD_Write_DATA8(0x0f);
+//    LCD_Write_DATA8(0x07);
+//    LCD_Write_DATA8(0x00);
+//
+//    LCD_Write_COM(0xE1);        // NGAMCTRL (Negative Gamma Control)
+//    LCD_Write_DATA8(0x0F);
+//    LCD_Write_DATA8(0x38);
+//    LCD_Write_DATA8(0x30);
+//    LCD_Write_DATA8(0x09);
+//    LCD_Write_DATA8(0x0f);
+//    LCD_Write_DATA8(0x0f);
+//    LCD_Write_DATA8(0x4e);
+//    LCD_Write_DATA8(0x77);
+//    LCD_Write_DATA8(0x3c);
+//    LCD_Write_DATA8(0x07);
+//    LCD_Write_DATA8(0x10);
+//    LCD_Write_DATA8(0x05);
+//    LCD_Write_DATA8(0x23);
+//    LCD_Write_DATA8(0x1b);
+//    LCD_Write_DATA8(0x00);
+
+    LCD_Write_COM(0x20);        // Display Inversion 0x20 = OFF, 0x21 = ON
+
+
+                            //      0 x 1111 1000 0xE8
+                            //          |||| ||||
+                            //          |||| |||*-- D0 x
+                            //          |||| ||*--- D1 x
+                            //          |||| |*---- D2 MH   Display Data Latch Data Order  Не влияет
+                            //                              0 = LCD Refresh Left to Right
+                            //                              1 = LCD Refresh Right to Left - normal landscape
+                            //          |||| *----- D3 BGR  RGB/BGR Order
+                            //                              0 = RGB - Inverse color
+                            //                              1 = BGR - Normal color
+                            //          |||*------- D4 ML   Line Address Order   Отражает по вертикали или вращает вокруг горизонтальной оси
+                            //                              0 = LCD Refresh Top to Bottom
+                            //                              1 = LCD Refresh Bottom to Top
+                            //          ||*-------- D5 MV   Page/Column Order  Меняет оси X и Y местами -Вращает картинку вокруг центра
+                            //                              0 = Normal Mode
+                            //                              1 = Reverse Mode
+                            //          |*--------- D6 MX   Column Address Order Начало координат X -ЕСЛИ D5 = 1 Отражает по вертикали
+                            //                              0 = Left to Right
+                            //                              1 = Right to Left
+                            //          *---------- D7 MY   Page Address Order Начало координат Y -ЕСЛИ D5 = 1 Отражает по горизонтали
+                            //                              0 = Top to Bottom
+                            //                              1 = Bottom to Top-swap xy
+
+    LCD_Write_COM(0x36);
+    LCD_Write_DATA8(0x28);  // MAX_X = 239;MAX_Y = 319; 0x48 ( 0x28 - Landscape = Default | SwapXY; MAX_X = 319;MAX_Y = 239); 0x88 0xE8  выбираем ориентацию дисплея
+    LCD_Write_COM(0x3A);    // Interface Pixel Format
+    LCD_Write_DATA8(0x55);
+    LCD_Write_COM(0x11);
+    osDelay(150);
+    LCD_Write_COM(0x29);
+    osDelay(25);
+
 #endif
 
 #if defined(ILI9325) || defined(ILI9328)
@@ -338,7 +449,7 @@ void UTFT::InitLCD(DisplayOrientation po)
     LCD_Write_COM_DATA16(0x0010, 0x1590);	      // Power Control 1 (R10h)
     /**
      * AP[2:0]=1 (1.00)
-     * APE = �1� to start the generation of power supply according to the power supply startup sequence
+     * APE = Ó1Ô to start the generation of power supply according to the power supply startup sequence
      * BT[3:0]=5 DDVDH=Vci1 x2 VCL=-Vci1 VGH=Vci1 x5 VGL=-Vci1 x3
      **/
     LCD_Write_COM_DATA16(0x0011, 0x0227);		  // VC[2:0]=7 (1.0xVci), DC0[2:0]=2(Fosc/4), DC1[2:0]=2(Fosc/16)
@@ -401,7 +512,7 @@ void UTFT::InitLCD(DisplayOrientation po)
     LCD_Write_DATA8(0x02);
     LCD_Write_DATA8(0x54);
 
-    LCD_Write_COM(0xE0);		// PLL enable
+    LCD_Write_COM(0xE0);		 //PLL enable
     LCD_Write_DATA8(0x01);
     osDelay(10);
 
@@ -409,7 +520,7 @@ void UTFT::InitLCD(DisplayOrientation po)
     LCD_Write_DATA8(0x03);
     osDelay(10);
 
-    LCD_Write_COM(0x01);		// software reset
+    LCD_Write_COM(0x01);		 //software reset
     osDelay(100);
 
     LCD_Write_COM(0xE6);		//PLL setting for PCLK, depends on resolution
@@ -418,10 +529,10 @@ void UTFT::InitLCD(DisplayOrientation po)
     LCD_Write_DATA8(0xFF);
 
     LCD_Write_COM(0xB0);		//LCD SPECIFICATION
-    LCD_Write_DATA8((IS24BITLCD) ? 0x24 : 0x04);
+ //   LCD_Write_DATA8((IS24BITLCD) ? 0x24 : 0x04);
     LCD_Write_DATA8(0x00);
-    LCD_Write_DATA8(0x03);		//Set HDP	799
-    LCD_Write_DATA8(0x1F);
+    LCD_Write_DATA8(0x01);		//Set HDP	799
+    LCD_Write_DATA8(0x3F);
     LCD_Write_DATA8(0x01);		//Set VDP	479
     LCD_Write_DATA8(0xDF);
     LCD_Write_DATA8(0x00);
@@ -474,6 +585,9 @@ void UTFT::InitLCD(DisplayOrientation po)
     LCD_Write_DATA8(0x0d);
 
     LCD_Write_COM(0x2C);
+
+
+
 #endif
 
 	setColor(0xFFFF);
@@ -502,8 +616,11 @@ void UTFT::setXY(uint16_t p_x1, uint16_t p_y1, uint16_t p_x2, uint16_t p_y2)
         y2 = p_y2;
         x1 = p_x1;
         x2 = p_x2;
+
+
 	}
-#if defined(SSD1963_50) || defined(SSD1963_70)
+
+#if defined(SSD1963_50) || defined(SSD1963_70) || defined(ILI9486)
 	LCD_Write_COM_DATA16(0x2a, y1>>8);
 	LCD_Write_DATA8(y1);
 	LCD_Write_DATA8(y2>>8);
@@ -524,6 +641,7 @@ void UTFT::setXY(uint16_t p_x1, uint16_t p_y1, uint16_t p_x2, uint16_t p_y2)
 	LCD_Write_COM_DATA16(0x20, x1);
 	LCD_Write_COM_DATA16(0x21, y1);
 	LCD_Write_COM(0x22);
+
 #endif
 }
 

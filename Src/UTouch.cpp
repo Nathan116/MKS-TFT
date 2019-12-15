@@ -94,7 +94,7 @@ bool UTouch::read(uint16_t &px, uint16_t &py, uint16_t * null rawX, uint16_t * n
 // We need to allow the touch chip ADC input to settle. See TI app note http://www.ti.com/lit/pdf/sbaa036.
 bool UTouch::getTouchData(bool wantY, uint16_t &rslt)
 {
-#if defined(ILI9325) || defined(ILI9328)
+#if defined(ILI9325) || defined(ILI9328) || defined(ILI9486)
 	uint8_t pTxData[3] = { (uint8_t) ((wantY) ? 0xD3 : 0x93), 0, 0 };
 #elif defined(SSD1963_50) || defined(SSD1963_70)
 	uint8_t pTxData[3] = { (uint8_t) ((wantY) ? 0x93 : 0xD3), 0, 0 };
